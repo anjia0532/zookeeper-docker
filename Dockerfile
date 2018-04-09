@@ -1,6 +1,8 @@
 FROM openjdk:8u151-jre-alpine
 
-ENV SERVICE_VERSION=3.4.11 \
+ARG ZK_VERSION=3.4.11
+
+ENV SERVICE_VERSION=$ZK_VERSION \
     SERVICE_NAME=zk \
     SERVICE_HOME=/opt/zk \
     SERVICE_CONF=/opt/zk/conf/zoo.cfg \
@@ -18,6 +20,7 @@ RUN SERVICE_RELEASE=zookeeper-${SERVICE_VERSION} && \
     apk add --no-cache bash &&\
     eval $(gpg-agent --daemon) && \
     curl -sSLO "https://dist.apache.org/repos/dist/release/zookeeper/${SERVICE_RELEASE}/${SERVICE_RELEASE}.tar.gz" && \
+    echo "https://dist.apache.org/repos/dist/release/zookeeper/${SERVICE_RELEASE}/${SERVICE_RELEASE}.tar.gz" && \
     curl -sSLO https://dist.apache.org/repos/dist/release/zookeeper/${SERVICE_RELEASE}/${SERVICE_RELEASE}.tar.gz.asc && \
     curl -sSL  https://dist.apache.org/repos/dist/release/zookeeper/KEYS | gpg -v --import - && \
     gpg -v --verify ${SERVICE_RELEASE}.tar.gz.asc && \
@@ -34,8 +37,8 @@ RUN SERVICE_RELEASE=zookeeper-${SERVICE_VERSION} && \
       ${SERVICE_HOME}/src \
       ${SERVICE_HOME}/bin/*.cmd && \
     addgroup -g ${SERVICE_GID} ${SERVICE_GROUP} && \
-    adduser -g "${SERVICE_NAME} user" -D -h ${SERVICE_HOME} -G ${SERVICE_GROUP} -s /sbin/nologin -u ${SERVICE_UID} ${SERVICE_USER} 
-    
+    adduser -g "${SERVICE_NAME} user" -D -h ${SERVICE_HOME} -G ${SERVICE_GROUP} -s /sbin/nologin -u ${SERVICE_UID} ${SERVICE_USER}
+
 
 
 WORKDIR ${SERVICE_HOME}
