@@ -4,7 +4,7 @@ zookeeper-docker
 Useage
 ================
 
-### clone repo
+### Clone repo
 
 ```bash
 $ git clone https://github.com/anjia0532/zookeeper-docker.git
@@ -18,19 +18,21 @@ $ docker build --build-arg ZK_VERSION=3.4.10 . -t anjia0532/zookeeper:stable-alp
 $ docker build . -t anjia0532/zookeeper:stable-alpine # default ZK_VERSION is 3.4.11
 ```
 
-### set zk config
+### Set zk config
 ```bash
-$ docker run  -d --name zk  -e ZK_abc_a=1 anjia0532/zookeeper:3.4.11-alpine && docker container exec zk cat /opt/zk/conf/zoo.cfg
+$ docker run  -d --name zk  -e docker run  -d --name zk  -e ZK_abc_a=1 -e ZK_aBc=1 -e ZK_aB_c=1 anjia0532/zookeeper:3.4.11-alpine && docker container exec zk cat /opt/zk/conf/zoo.cfg
 # //output 
 # //...
+# //aB.c=1
 # //abc.a=1
-```
+# //aBc=1
 
-### env
+```
 
 1. ZK_abc_a => abc.a
 2. ZK_aBc => aBc
 3. ZK_aB_c => aB.c
+
 
 Thanks
 ================
