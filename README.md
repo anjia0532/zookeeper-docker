@@ -20,7 +20,7 @@ $ docker build . -t anjia0532/zookeeper:stable-alpine # default ZK_VERSION is 3.
 
 ### Set zk config
 ```bash
-$ docker run  -d --name zk  -e docker run  -d --name zk  -e ZK_abc_a=1 -e ZK_aBc=1 -e ZK_aB_c=1 anjia0532/zookeeper:3.4.11-alpine && docker container exec zk cat /opt/zk/conf/zoo.cfg
+$ docker run  -d --name zk  -e  ZK_abc_a=1 -e ZK_aBc=1 -e ZK_aB_c=1 anjia0532/zookeeper:3.4.11-alpine && docker container exec zk cat /opt/zk/conf/zoo.cfg
 # //output 
 # //...
 # //aB.c=1
@@ -33,6 +33,18 @@ $ docker run  -d --name zk  -e docker run  -d --name zk  -e ZK_abc_a=1 -e ZK_aBc
 2. ZK_aBc => aBc
 3. ZK_aB_c => aB.c
 
+### Custom init script
+```bash
+$ docker run  -d --name zk  -e  CUSTOM_INIT_SCRIPT="echo 1 > /opt/zk/data/myid" -e ZK_dataDir="/opt/zk/data/" anjia0532/zookeeper:3.4.11-alpine && docker container exec zk cat /opt/zk/conf/zoo.cfg && docker container exec zk cat /opt/zk/data/myid
+
+#// /opt/zk/conf/zoo.cfg output
+#// ...
+#// dataDir=/opt/zk/data/
+#// ...
+
+#// /opt/zk/data/myid output
+#// 1
+```
 
 Thanks
 ================
