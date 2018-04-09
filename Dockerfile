@@ -1,34 +1,47 @@
-FROM wurstmeister/base
+FROM openjdk:8u151-jre-alpine
 
-MAINTAINER Wurstmeister
+ENV SERVICE_VERSION=3.4.11 \
+    SERVICE_NAME=zk \
+    SERVICE_HOME=/opt/zk \
+    SERVICE_CONF=/opt/zk/conf/zoo.cfg \
+    SERVICE_USER=zookeeper \
+    SERVICE_UID=10002 \
+    SERVICE_GROUP=zookeeper \
+    SERVICE_GID=10002 \
+    PATH=/opt/zk/bin:${PATH}
 
-ENV ZOOKEEPER_VERSION 3.4.9
+# Install service software
+RUN SERVICE_RELEASE=zookeeper-${SERVICE_VERSION} && \
+    mkdir -p ${SERVICE_HOME}/logs ${SERVICE_HOME}/data && \
+    cd /tmp && \
+    apk add --no-cache --virtual .fetch-deps jq gnupg tar patch  curl && \
+    apk add --no-cache bash &&\
+    eval $(gpg-agent --daemon) && \
+    curl -sSLO "https://dist.apache.org/repos/dist/release/zookeeper/${SERVICE_RELEASE}/${SERVICE_RELEASE}.tar.gz" && \
+    curl -sSLO https://dist.apache.org/repos/dist/release/zookeeper/${SERVICE_RELEASE}/${SERVICE_RELEASE}.tar.gz.asc && \
+    curl -sSL  https://dist.apache.org/repos/dist/release/zookeeper/KEYS | gpg -v --import - && \
+    gpg -v --verify ${SERVICE_RELEASE}.tar.gz.asc && \
+    tar -zx -C ${SERVICE_HOME} --strip-components=1 --no-same-owner -f ${SERVICE_RELEASE}.tar.gz && \
+    apk del .fetch-deps && \
+    mv ${SERVICE_HOME}/conf/zoo_sample.cfg ${SERVICE_HOME}/conf/zoo.cfg && \
+    rm -rf \
+      /tmp/* \
+      /root/.gnupg \
+      /var/cache/apk/* \
+      ${SERVICE_HOME}/contrib/fatjar \
+      ${SERVICE_HOME}/dist-maven \
+      ${SERVICE_HOME}/docs \
+      ${SERVICE_HOME}/src \
+      ${SERVICE_HOME}/bin/*.cmd && \
+    addgroup -g ${SERVICE_GID} ${SERVICE_GROUP} && \
+    adduser -g "${SERVICE_NAME} user" -D -h ${SERVICE_HOME} -G ${SERVICE_GROUP} -s /sbin/nologin -u ${SERVICE_UID} ${SERVICE_USER} 
+    
 
-#Download Zookeeper
-RUN wget -q http://mirror.vorboss.net/apache/zookeeper/zookeeper-${ZOOKEEPER_VERSION}/zookeeper-${ZOOKEEPER_VERSION}.tar.gz && \
-wget -q https://www.apache.org/dist/zookeeper/KEYS && \
-wget -q https://www.apache.org/dist/zookeeper/zookeeper-${ZOOKEEPER_VERSION}/zookeeper-${ZOOKEEPER_VERSION}.tar.gz.asc && \
-wget -q https://www.apache.org/dist/zookeeper/zookeeper-${ZOOKEEPER_VERSION}/zookeeper-${ZOOKEEPER_VERSION}.tar.gz.md5
 
-#Verify download
-RUN md5sum -c zookeeper-${ZOOKEEPER_VERSION}.tar.gz.md5 && \
-gpg --import KEYS && \
-gpg --verify zookeeper-${ZOOKEEPER_VERSION}.tar.gz.asc
+WORKDIR ${SERVICE_HOME}
+VOLUME "${SERVICE_HOME}"
 
-#Install
-RUN tar -xzf zookeeper-${ZOOKEEPER_VERSION}.tar.gz -C /opt
+COPY start-zk.sh /usr/bin/
 
-#Configure
-RUN mv /opt/zookeeper-${ZOOKEEPER_VERSION}/conf/zoo_sample.cfg /opt/zookeeper-${ZOOKEEPER_VERSION}/conf/zoo.cfg
-
-ENV JAVA_HOME /usr/lib/jvm/java-7-openjdk-amd64
-ENV ZK_HOME /opt/zookeeper-${ZOOKEEPER_VERSION}
-RUN sed  -i "s|/tmp/zookeeper|$ZK_HOME/data|g" $ZK_HOME/conf/zoo.cfg; mkdir $ZK_HOME/data
-
-ADD start-zk.sh /usr/bin/start-zk.sh 
-EXPOSE 2181 2888 3888
-
-WORKDIR /opt/zookeeper-${ZOOKEEPER_VERSION}
-VOLUME ["/opt/zookeeper-${ZOOKEEPER_VERSION}/conf", "/opt/zookeeper-${ZOOKEEPER_VERSION}/data"]
-
-CMD /usr/sbin/sshd && bash /usr/bin/start-zk.sh
+# Use "exec" form so that it runs as PID 1 (useful for graceful shutdown)
+CMD ["start-zk.sh"]
